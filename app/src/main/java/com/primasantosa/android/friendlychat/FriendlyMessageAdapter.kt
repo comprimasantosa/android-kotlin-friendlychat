@@ -7,7 +7,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 
-class FriendlyMessageAdapter(private var friendlyMessageData: List<FriendlyMessage?>) :
+class FriendlyMessageAdapter(private var friendlyMessageData: List<FriendlyMessage>) :
     RecyclerView.Adapter<FriendlyMessageAdapter.ViewHolder>() {
 
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -29,10 +29,10 @@ class FriendlyMessageAdapter(private var friendlyMessageData: List<FriendlyMessa
         val message = friendlyMessageData[position]
 
         // Set name
-        holder.nameTv.text = message?.name
+        holder.nameTv.text = message.name
 
         // Set message
-        holder.messageTv.text = message?.text
+        holder.messageTv.text = message.text
 
         // Set photo
 //        if (message?.photoUrl != null) {

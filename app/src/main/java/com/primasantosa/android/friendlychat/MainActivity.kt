@@ -1,15 +1,17 @@
 package com.primasantosa.android.friendlychat
 
+import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
-import android.widget.Button
-import android.widget.EditText
-import android.widget.ImageButton
-import android.widget.ProgressBar
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.RecyclerView
+import com.firebase.ui.auth.AuthUI
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 
@@ -20,7 +22,8 @@ class MainActivity : AppCompatActivity() {
         private val TAG = "MainActivity"
     }
 
-    private lateinit var userName: String
+    private var username: String? = ANONYMOUS
+    private lateinit var friendlyMessageData: MutableList<FriendlyMessage>
 
     private lateinit var progressBar: ProgressBar
     private lateinit var photoPickerButton: ImageButton
@@ -31,15 +34,13 @@ class MainActivity : AppCompatActivity() {
     // Firebase
     private lateinit var firebaseDatabase: FirebaseDatabase
     private lateinit var databaseReference: DatabaseReference
-    private lateinit var childEventListener: ChildEventListener
     private lateinit var firebaseAuth: FirebaseAuth
-    private lateinit var authStateListener: FirebaseAuth.AuthStateListener
+    private var authStateListener: FirebaseAuth.AuthStateListener? = null
+    private var childEventListener: ChildEventListener? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
-        userName = ANONYMOUS
 
         // Initialize Firebase Components
         firebaseDatabase = FirebaseDatabase.getInstance()
@@ -54,11 +55,10 @@ class MainActivity : AppCompatActivity() {
         sendButton = findViewById(R.id.sendButton)
 
         // Initialize RecyclerView and its adapter
-        val friendMessageData = mutableListOf<FriendlyMessage?>()
-
+        friendlyMessageData = mutableListOf()
         messageRecyclerView = findViewById(R.id.messageRecyclerView)
         messageRecyclerView.apply {
-            adapter = FriendlyMessageAdapter(friendMessageData)
+            adapter = FriendlyMessageAdapter(friendlyMessageData)
         }
 
         // Initialize Progress Bar
@@ -84,27 +84,115 @@ class MainActivity : AppCompatActivity() {
 
         // Send button sends a message and clears the EditText
         sendButton.setOnClickListener {
-            val message = FriendlyMessage(messageEditText.text.toString(), userName, null)
+            val message = FriendlyMessage(messageEditText.text.toString(), username, null)
             databaseReference.push().setValue(message)
 
             // Clear input box
             messageEditText.text.clear()
         }
 
-        // Database Read
-        childEventListener = object : ChildEventListener {
-            override fun onCancelled(p0: DatabaseError) {}
-            override fun onChildMoved(p0: DataSnapshot, p1: String?) {}
-            override fun onChildChanged(p0: DataSnapshot, p1: String?) {}
-            override fun onChildRemoved(p0: DataSnapshot) {}
-            override fun onChildAdded(p0: DataSnapshot, p1: String?) {
-                val message = p0.getValue(FriendlyMessage::class.java)
-                friendMessageData.add(message)
-                messageRecyclerView.adapter?.notifyDataSetChanged()
+        // Firebase Auth
+        authStateListener = FirebaseAuth.AuthStateListener {
+            val user = firebaseAuth.currentUser
+            if (user != null) {
+                // user is signed in
+                onSignedInInitialize(user.displayName)
+            } else {
+                // user is signed out
+                onSignedOutCleanup()
+
+                val providers = arrayListOf(
+                    AuthUI.IdpConfig.EmailBuilder().build(),
+                    AuthUI.IdpConfig.GoogleBuilder().build()
+                )
+
+                startActivityForResult(
+                    AuthUI.getInstance()
+                        .createSignInIntentBuilder()
+                        .setIsSmartLockEnabled(false)
+                        .setAvailableProviders(providers)
+                        .build(),
+                    RC_SIGN_IN
+                )
             }
         }
-        databaseReference.addChildEventListener(childEventListener)
 
+    }
 
+    private fun onSignedOutCleanup() {
+        username = ANONYMOUS
+        friendlyMessageData.clear()
+        detachDatabaseReadListener()
+    }
+
+    private fun detachDatabaseReadListener() {
+        childEventListener?.let { databaseReference.removeEventListener(it) }
+        childEventListener = null
+    }
+
+    private fun onSignedInInitialize(username: String?) {
+        this.username = username
+        attachDatabaseReadListener()
+    }
+
+    private fun attachDatabaseReadListener() {
+        // Database Read
+        if (childEventListener == null) {
+            childEventListener = object : ChildEventListener {
+                override fun onCancelled(p0: DatabaseError) {}
+                override fun onChildMoved(p0: DataSnapshot, p1: String?) {}
+                override fun onChildChanged(p0: DataSnapshot, p1: String?) {}
+                override fun onChildRemoved(p0: DataSnapshot) {}
+                override fun onChildAdded(p0: DataSnapshot, p1: String?) {
+                    val message = p0.getValue(FriendlyMessage::class.java)
+                    friendlyMessageData.add(message!!)
+                    messageRecyclerView.adapter?.notifyDataSetChanged()
+                    messageRecyclerView.smoothScrollToPosition(friendlyMessageData.count() - 1)
+                }
+            }
+            databaseReference.addChildEventListener(childEventListener!!)
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == RC_SIGN_IN) {
+            if (resultCode == Activity.RESULT_OK) {
+                Toast.makeText(this, "Signed in!", Toast.LENGTH_SHORT).show()
+            } else if (resultCode == Activity.RESULT_CANCELED) {
+                Toast.makeText(this, "Sign in canceled.", Toast.LENGTH_SHORT).show()
+                finish()
+            }
+        }
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        val inflater = menuInflater
+        inflater.inflate(R.menu.main_menu, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.sign_out_menu -> {
+                AuthUI.getInstance().signOut(this)
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        firebaseAuth.addAuthStateListener(authStateListener!!)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        if (authStateListener != null) {
+            firebaseAuth.removeAuthStateListener(authStateListener!!)
+        }
+        detachDatabaseReadListener()
+        friendlyMessageData.clear()
     }
 }
