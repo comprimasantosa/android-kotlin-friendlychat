@@ -12,6 +12,7 @@
         android:layout_height="match_parent"
         android:layout_above="@+id/linearLayout"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+        app:stackFromEnd="true"
         tools:listitem="@layout/item_message" />
 
     <LinearLayout

@@ -11,9 +11,7 @@ import android.widget.ProgressBar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.ChildEventListener
-import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.*
 
 class MainActivity : AppCompatActivity() {
 
@@ -56,7 +54,7 @@ class MainActivity : AppCompatActivity() {
         sendButton = findViewById(R.id.sendButton)
 
         // Initialize RecyclerView and its adapter
-        val friendMessageData = mutableListOf<FriendlyMessage>()
+        val friendMessageData = mutableListOf<FriendlyMessage?>()
 
         messageRecyclerView = findViewById(R.id.messageRecyclerView)
         messageRecyclerView.apply {
@@ -92,6 +90,20 @@ class MainActivity : AppCompatActivity() {
             // Clear input box
             messageEditText.text.clear()
         }
+
+        // Database Read
+        childEventListener = object : ChildEventListener {
+            override fun onCancelled(p0: DatabaseError) {}
+            override fun onChildMoved(p0: DataSnapshot, p1: String?) {}
+            override fun onChildChanged(p0: DataSnapshot, p1: String?) {}
+            override fun onChildRemoved(p0: DataSnapshot) {}
+            override fun onChildAdded(p0: DataSnapshot, p1: String?) {
+                val message = p0.getValue(FriendlyMessage::class.java)
+                friendMessageData.add(message)
+                messageRecyclerView.adapter?.notifyDataSetChanged()
+            }
+        }
+        databaseReference.addChildEventListener(childEventListener)
 
 
     }
