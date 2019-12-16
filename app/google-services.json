@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "641246042814",
+    "firebase_url": "https://android-kotlin-friendlychat.firebaseio.com",
+    "project_id": "android-kotlin-friendlychat",
+    "storage_bucket": "android-kotlin-friendlychat.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:641246042814:android:b3cf047c4697de70ea1cef",
+        "android_client_info": {
+          "package_name": "com.primasantosa.android.friendlychat"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "641246042814-7n5vjlpc67s1rtjb4pplfe2pv8eq246g.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.primasantosa.android.friendlychat",
+            "certificate_hash": "6182d17d70f2d2f26d9cd39c5c7ffd6a3fc9726f"
+          }
+        },
+        {
+          "client_id": "641246042814-ql6h0ctcil0vttdbg1gr10h8noq7230n.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA7w0ptOnL3GMikGb3dGCSJYeYy0qWQqeU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "641246042814-ql6h0ctcil0vttdbg1gr10h8noq7230n.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
