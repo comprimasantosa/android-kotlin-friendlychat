@@ -8,7 +8,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 
-class FriendlyMessageAdapter(private val friendlyMessage: List<FriendlyMessage>) :
+class FriendlyMessageAdapter(private val friendlyMessageData: List<FriendlyMessage>) :
     RecyclerView.Adapter<FriendlyMessageAdapter.ViewHolder>() {
 
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -23,11 +23,11 @@ class FriendlyMessageAdapter(private val friendlyMessage: List<FriendlyMessage>)
     }
 
     override fun getItemCount(): Int {
-        return friendlyMessage.size
+        return friendlyMessageData.size
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val message = friendlyMessage[position]
+        val message = friendlyMessageData[position]
 
         // Set name
         holder.nameTv.text = message.name
