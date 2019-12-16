@@ -66,7 +66,13 @@ class MainActivity : AppCompatActivity() {
 
         // ImagePickerButton shows an image picker to upload a image for a message
         photoPickerButton.setOnClickListener {
-            // TODO: Fire an intent to show an image picker
+            val intent = Intent(Intent.ACTION_GET_CONTENT)
+            intent.type = "image/jpeg"
+            intent.putExtra(Intent.EXTRA_LOCAL_ONLY, true)
+            startActivityForResult(
+                Intent.createChooser(intent, "Complete action using"),
+                RC_PHOTO_PICKER
+            )
         }
 
         // Enable Send button when there's text to send
