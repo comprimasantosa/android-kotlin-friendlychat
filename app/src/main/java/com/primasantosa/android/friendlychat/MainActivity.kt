@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
+import android.text.InputFilter
 import android.text.TextWatcher
 import android.view.Menu
 import android.view.MenuItem
@@ -92,7 +93,8 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
-        // TODO: Input filter
+        // Length filter
+        messageEditText.filters += InputFilter.LengthFilter(DEFAULT_MSG_LENGTH_LIMIT)
 
         // Send button sends a message and clears the EditText
         sendButton.setOnClickListener {
