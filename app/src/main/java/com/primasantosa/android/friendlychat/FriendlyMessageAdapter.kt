@@ -6,6 +6,7 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 
 class FriendlyMessageAdapter(private var friendlyMessageData: List<FriendlyMessage>) :
     RecyclerView.Adapter<FriendlyMessageAdapter.ViewHolder>() {
@@ -13,7 +14,7 @@ class FriendlyMessageAdapter(private var friendlyMessageData: List<FriendlyMessa
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val nameTv: TextView = itemView.findViewById(R.id.nameTextView)
         val messageTv: TextView = itemView.findViewById(R.id.messageTextView)
-        val photoTv: ImageView = itemView.findViewById(R.id.photoImageView)
+        val photoImgView: ImageView = itemView.findViewById(R.id.photoImageView)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -31,20 +32,24 @@ class FriendlyMessageAdapter(private var friendlyMessageData: List<FriendlyMessa
         // Set name
         holder.nameTv.text = message.name
 
-        // Set message
-        holder.messageTv.text = message.text
+        holder.photoImgView.setImageDrawable(null)
 
         // Set photo
-//        if (message?.photoUrl != null) {
-//            holder.photoTv.visibility = View.VISIBLE
-//            holder.messageTv.visibility = View.GONE
-//
-//            Glide.with(holder.itemView.context)
-//                .load(message.photoUrl)
-//                .into(holder.photoTv)
-//        } else {
-//            holder.photoTv.visibility = View.GONE
-//            holder.photoTv.visibility = View.VISIBLE
-//        }
+        if (message.photoUrl != null) {
+            holder.photoImgView.visibility = View.VISIBLE
+            holder.messageTv.visibility = View.GONE
+
+            Glide
+                .with(holder.itemView.context)
+                .load(message.photoUrl)
+                .into(holder.photoImgView)
+
+        } else {
+            holder.photoImgView.visibility = View.GONE
+            holder.messageTv.visibility = View.VISIBLE
+
+            // Set message
+            holder.messageTv.text = message.text
+        }
     }
 }

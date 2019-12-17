@@ -14,6 +14,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.firebase.ui.auth.AuthUI
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
+import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.StorageReference
 
 class MainActivity : AppCompatActivity() {
 
@@ -35,6 +37,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var firebaseDatabase: FirebaseDatabase
     private lateinit var databaseReference: DatabaseReference
     private lateinit var firebaseAuth: FirebaseAuth
+    private lateinit var firebaseStorage: FirebaseStorage
+    private lateinit var storageReference: StorageReference
     private var authStateListener: FirebaseAuth.AuthStateListener? = null
     private var childEventListener: ChildEventListener? = null
 
@@ -45,8 +49,10 @@ class MainActivity : AppCompatActivity() {
         // Initialize Firebase Components
         firebaseDatabase = FirebaseDatabase.getInstance()
         firebaseAuth = FirebaseAuth.getInstance()
+        firebaseStorage = FirebaseStorage.getInstance()
 
         databaseReference = firebaseDatabase.reference.child("messages")
+        storageReference = firebaseStorage.reference.child("chat_photos")
 
         // Initialize references to Views
         progressBar = findViewById(R.id.progressBar)
@@ -152,8 +158,8 @@ class MainActivity : AppCompatActivity() {
                 override fun onChildAdded(p0: DataSnapshot, p1: String?) {
                     val message = p0.getValue(FriendlyMessage::class.java)
                     friendlyMessageData.add(message!!)
-                    messageRecyclerView.adapter?.notifyDataSetChanged()
                     messageRecyclerView.smoothScrollToPosition(friendlyMessageData.count() - 1)
+                    messageRecyclerView.adapter?.notifyDataSetChanged()
                 }
             }
             databaseReference.addChildEventListener(childEventListener!!)
@@ -168,6 +174,31 @@ class MainActivity : AppCompatActivity() {
             } else if (resultCode == Activity.RESULT_CANCELED) {
                 Toast.makeText(this, "Sign in canceled.", Toast.LENGTH_SHORT).show()
                 finish()
+            }
+        } else if (requestCode == RC_PHOTO_PICKER && resultCode == Activity.RESULT_OK) {
+            val selectedImageUri = data?.data
+
+            // Get reference to store file at chat_photos/<FILENAME>
+            val photoRef = storageReference.child(selectedImageUri?.lastPathSegment!!)
+
+            // Upload file to Firebase Storage
+            photoRef.putFile(selectedImageUri).continueWithTask { task ->
+                if (!task.isSuccessful) {
+                    task.exception?.let {
+                        throw task.exception!!
+                    }
+                }
+                // Continue with the task to get the download URL
+                photoRef.downloadUrl
+            }.addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    val downloadUri = task.result
+                    val friendlyMessage = FriendlyMessage(null, username, downloadUri.toString())
+                    databaseReference.push().setValue(friendlyMessage)
+                } else {
+                    // Handle failures
+                    // ...
+                }
             }
         }
     }
