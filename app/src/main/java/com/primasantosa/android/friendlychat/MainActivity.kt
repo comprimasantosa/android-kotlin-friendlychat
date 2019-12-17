@@ -15,6 +15,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.firebase.ui.auth.AuthUI
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
+import com.google.firebase.remoteconfig.FirebaseRemoteConfig
+import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageReference
 
@@ -40,6 +42,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var firebaseAuth: FirebaseAuth
     private lateinit var firebaseStorage: FirebaseStorage
     private lateinit var storageReference: StorageReference
+    private lateinit var firebaseRemoteConfig: FirebaseRemoteConfig
     private var authStateListener: FirebaseAuth.AuthStateListener? = null
     private var childEventListener: ChildEventListener? = null
 
@@ -51,6 +54,7 @@ class MainActivity : AppCompatActivity() {
         firebaseDatabase = FirebaseDatabase.getInstance()
         firebaseAuth = FirebaseAuth.getInstance()
         firebaseStorage = FirebaseStorage.getInstance()
+        firebaseRemoteConfig = FirebaseRemoteConfig.getInstance()
 
         databaseReference = firebaseDatabase.reference.child("messages")
         storageReference = firebaseStorage.reference.child("chat_photos")
@@ -131,6 +135,34 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        // Remote Config
+        val configSettings = FirebaseRemoteConfigSettings.Builder()
+            .setMinimumFetchIntervalInSeconds(3600)
+            .build()
+        firebaseRemoteConfig.setConfigSettingsAsync(configSettings)
+
+        val defaultConfigMap = mapOf(FRIENDLY_MSG_LENGTH_KEY to DEFAULT_MSG_LENGTH_LIMIT)
+        firebaseRemoteConfig.setDefaultsAsync(defaultConfigMap)
+        fetchConfig()
+
+    }
+
+    fun fetchConfig() {
+        firebaseRemoteConfig.fetchAndActivate()
+            .addOnCompleteListener(this) { task ->
+                if (task.isSuccessful) {
+                    applyRetrievedLengthLimit()
+                    Toast.makeText(this, "Fetch and activate succeeded", Toast.LENGTH_SHORT).show()
+                } else {
+                    applyRetrievedLengthLimit()
+                    Toast.makeText(this, "Fetch failed", Toast.LENGTH_SHORT).show()
+                }
+            }
+    }
+
+    private fun applyRetrievedLengthLimit() {
+        val friendlyLengthMessage = firebaseRemoteConfig.getLong(FRIENDLY_MSG_LENGTH_KEY)
+        messageEditText.filters += InputFilter.LengthFilter(friendlyLengthMessage.toInt())
     }
 
     private fun onSignedOutCleanup() {
